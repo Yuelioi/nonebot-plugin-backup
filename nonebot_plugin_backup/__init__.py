@@ -17,6 +17,10 @@ backup_command = get_driver().config.dict().get('backup_command', "")
 if not backup_command:
     backup_command = "备份群文件"
 
+backup_maxsize = get_driver().config.dict().get('backup_maxsize', "")
+if not backup_maxsize:
+    backup_maxsize = 300
+
 linker_parser = ArgumentParser(add_help=False)
 linker = on_shell_command(backup_command, parser=linker_parser, priority=1)
 
@@ -54,7 +58,7 @@ async def link(bot: Bot, event: GroupMessageEvent, state: T_State):
             logger.debug("下一个搜索的文件夹：" + _)
             root = await bot.get_group_files_by_folder(group_id=gid, folder_id=_)
 
-            folder_path = "./qqgroup/" + \
+            fdpath = "./qqgroup/" + \
                 str(event.group_id) + "/" + fdnames[fdindex]
 
             file = root.get("files")
@@ -65,10 +69,10 @@ async def link(bot: Bot, event: GroupMessageEvent, state: T_State):
                     fid = i["file_id"]
                     fbusid = i["busid"]
                     fsize = i["file_size"]
-                    fpath = os.path.join(folder_path, file_name)
+                    fpath = os.path.join(fdpath, file_name)
 
-                    if fsize/1024/1024 > 300:
-                        fdtoolarge.append(file_name)
+                    if fsize/1024/1024 > backup_maxsize:
+                        fdtoolarge.append(fdnames[fdindex] + file_name)
                         continue
 
                     if not os.path.exists(fpath):
@@ -76,8 +80,8 @@ async def link(bot: Bot, event: GroupMessageEvent, state: T_State):
                         url = finfo['url']
                         req = requests.get(url)
 
-                        if not os.path.exists(folder_path):
-                            os.makedirs(folder_path)
+                        if not os.path.exists(fdpath):
+                            os.makedirs(fdpath)
                         with open(fpath, 'wb') as mfile:
                             mfile.write(req.content)
 

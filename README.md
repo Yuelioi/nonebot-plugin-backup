@@ -41,8 +41,9 @@
 ```python
 COMMAND_START=["/", ""]  # 别忘了设置指令前缀，这里只是提醒一下，如果你不知道这个有什么用，请阅读nonebot文档
 
-linker_group=["<QQ群号>"]  # 启用插件的群
-linker_command="备份群文件" # 设置插件触发命令（默认`link`）
+backup_group=["<QQ群号>"]  # 启用插件的群
+backup_command="备份群文件" # 设置插件触发命令（默认`link`）
+backup_maxsize=300 # 超过多少M的文件不备份, 会在后面提醒哪些没备份
 ```
 
 ### 使用方法
