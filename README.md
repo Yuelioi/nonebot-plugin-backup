@@ -1,6 +1,6 @@
 <div align="center">
 
-# DirectLinker
+# nonebot backup group files
 
 ✨ 一个基于 [NoneBot2](https://github.com/nonebot/nonebot2) 的插件，用于备份 QQ 群文件 ✨
 

@@ -35,7 +35,7 @@ async def link(bot: Bot, event: GroupMessageEvent, state: T_State):
     fdtoolarge = []
     fdnames = []
 
-    if gid in backup_group:
+    if str(gid) in backup_group:
         args = vars(state.get("_args"))
         logger.debug(args)
 
