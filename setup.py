@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="nonebot-plugin-backup",
-    version="1.0.2",
+    version="1.0.3",
     author="Yueli",
     author_email="yuelioi1210@gmail.com",
     description="A plugin based on NoneBot2 to backup files in qq group.",

@@ -43,12 +43,12 @@
 配置文件`.env.*`中添加：
 
 ```python
-COMMAND_START=["/", ""]  # 别忘了设置指令前缀，这里只是提醒一下，如果你不知道这个有什么用，请阅读nonebot文档
-
-backup_group=["<QQ群号>"]  # 启用插件的群
+backup_group=["<QQ群号>"]  # 启用插件的群, 默认为[],代表所有群
 backup_command="备份群文件" # 设置插件触发命令
 backup_maxsize=300        # 超过多少M的文件不备份, 会在后面提醒哪些没备份
-backup_normal_files = True # 改为False 则不会备份`临时文件`
+
+backup_temp_files = True  # 是否备份`临时文件`,默认备份
+backup_temp_file_ignore = [".gif", ".png", ".jpg", ".mp4"] # 忽略`临时文件`哪些文件后缀
 ```
 
 ### 使用方法

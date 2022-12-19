@@ -22,9 +22,14 @@ backup_maxsize = get_driver().config.dict().get('backup_maxsize', "")
 if not backup_maxsize:
     backup_maxsize = 300
 
-backup_normal_files = get_driver().config.dict().get('backup_maxsize', "")
-if not backup_normal_files:
-    backup_normal_files = True
+backup_temp_files = get_driver().config.dict().get('backup_temp_files', "")
+if not backup_temp_files:
+    backup_temp_files = True
+
+backup_temp_file_ignore = get_driver().config.dict().get(
+    'backup_temp_file_ignore', "")
+if not backup_temp_file_ignore:
+    backup_temp_file_ignore = [".gif", ".png", ".jpg", ".mp4"]
 
 linker_parser = ArgumentParser(add_help=False)
 linker = on_shell_command(backup_command, parser=linker_parser, priority=1)
@@ -87,7 +92,7 @@ EI = EventInfo()
 async def link(bot: Bot, event: GroupMessageEvent, state: T_State):
     EI.init()
     gid = event.group_id
-    if str(gid) in backup_group:
+    if str(gid) in backup_group or backup_group == []:
         args = vars(state.get("_args"))
         logger.debug(args)
 
@@ -95,10 +100,14 @@ async def link(bot: Bot, event: GroupMessageEvent, state: T_State):
         tstart = time.time()
         root = await bot.get_group_root_files(group_id=gid)
         folders = root.get("folders")
-        if backup_normal_files:
+        if backup_temp_files:
             files = root.get("files")
             fdpath = "./qqgroup/" + str(event.group_id)
             for ff in files:
+                suf = Path(ff["file_name"]).suffix
+                if suf in backup_temp_file_ignore:
+                    continue
+
                 await SaveToDisk(bot, ff, fdpath, EI, gid)
 
         # 广度优先搜索
