@@ -25,6 +25,6 @@ setup(
     install_requires=[
         "nonebot2 >= 2.0.0b2",
         "nonebot-adapter-onebot >= 2.0.0b1",
-        "requests >= 1.0.0"
+        'requests>=2.28.1'
     ],
 )
