@@ -46,6 +46,7 @@
 backup_group=["<QQ群号>"]  # 启用插件的群, 默认为[],代表所有群
 backup_command="备份群文件" # 设置插件触发命令
 backup_maxsize=300        # 超过多少M的文件不备份, 会在后面提醒哪些没备份
+backup_minsize=0.01       # 低于多少M的文件不备份, 默认10kb
 
 backup_temp_files = True  # 是否备份`临时文件`,默认备份
 backup_temp_file_ignore = [".gif", ".png", ".jpg", ".mp4"] # 忽略`临时文件`哪些文件后缀

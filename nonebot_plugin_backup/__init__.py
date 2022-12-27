@@ -11,28 +11,16 @@ from pathlib import Path
 
 
 backup_group = get_driver().config.dict().get('backup_group', [])
-if not backup_group:
-    logger.warning('请在配置文件中设置应用群聊: backup_group=[\'群号\']')
-
-backup_command = get_driver().config.dict().get('backup_command', "")
-if not backup_command:
-    backup_command = "备份群文件"
-
-backup_maxsize = get_driver().config.dict().get('backup_maxsize', "")
-if not backup_maxsize:
-    backup_maxsize = 300
-
-backup_temp_files = get_driver().config.dict().get('backup_temp_files', "")
-if not backup_temp_files:
-    backup_temp_files = True
-
+backup_command = get_driver().config.dict().get('backup_command', "备份群文件")
+backup_maxsize = get_driver().config.dict().get('backup_maxsize', 300)
+backup_minsize = get_driver().config.dict().get('backup_minsize', 0.01)
+backup_temp_files = get_driver().config.dict().get('backup_temp_files', True)
 backup_temp_file_ignore = get_driver().config.dict().get(
-    'backup_temp_file_ignore', "")
-if not backup_temp_file_ignore:
-    backup_temp_file_ignore = [".gif", ".png", ".jpg", ".mp4"]
+    'backup_temp_file_ignore', [".gif", ".png", ".jpg", ".mp4"])
 
 linker_parser = ArgumentParser(add_help=False)
 linker = on_shell_command(backup_command, parser=linker_parser, priority=1)
+
 
 
 class EventInfo:
@@ -60,6 +48,9 @@ async def SaveToDisk(bot, ff, fdpath, EIF, gid):
     fsize = ff["file_size"]
     fpath = Path(fdpath, fname)
 
+    if fsize/1024/1024 < backup_minsize:
+        return
+
     if fsize/1024/1024 > backup_maxsize:
         EIF.fdtoolarge.append(
             EIF.fdnames[EI.fdindex] + "/" + fname)
@@ -85,8 +76,8 @@ async def SaveToDisk(bot, ff, fdpath, EIF, gid):
     else:
         EIF.fsizes += Path(fpath).stat().st_size
         EIF.fjump += 1
-EI = EventInfo()
 
+EI = EventInfo()
 
 @linker.handle()
 async def link(bot: Bot, event: GroupMessageEvent, state: T_State):
@@ -103,12 +94,13 @@ async def link(bot: Bot, event: GroupMessageEvent, state: T_State):
         if backup_temp_files:
             files = root.get("files")
             fdpath = "./qqgroup/" + str(event.group_id)
-            for ff in files:
-                suf = Path(ff["file_name"]).suffix
-                if suf in backup_temp_file_ignore:
-                    continue
+            if files:
+                for ff in files:
+                    suf = Path(ff["file_name"]).suffix
+                    if suf in backup_temp_file_ignore:
+                        continue
 
-                await SaveToDisk(bot, ff, fdpath, EI, gid)
+                    await SaveToDisk(bot, ff, fdpath, EI, gid)
 
         # 广度优先搜索
         dq = deque()
