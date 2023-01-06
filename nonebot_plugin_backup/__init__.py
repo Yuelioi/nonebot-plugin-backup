@@ -18,9 +18,20 @@ backup_temp_files = get_driver().config.dict().get('backup_temp_files', True)
 backup_temp_file_ignore = get_driver().config.dict().get(
     'backup_temp_file_ignore', [".gif", ".png", ".jpg", ".mp4"])
 
+
 linker_parser = ArgumentParser(add_help=False)
 linker = on_shell_command(backup_command, parser=linker_parser, priority=1)
 
+recovery_command = get_driver().config.dict().get('recovery_command', "恢复群文件")
+recovery_parser = ArgumentParser(add_help=False)
+recovery = on_shell_command(
+    recovery_command, parser=recovery_parser, priority=1)
+
+
+essence_command = get_driver().config.dict().get('essence_command', "备份群精华")
+essence_parser = ArgumentParser(add_help=False)
+essence = on_shell_command(
+    essence_command, parser=essence_parser, priority=1)
 
 
 class EventInfo:
@@ -77,7 +88,112 @@ async def SaveToDisk(bot, ff, fdpath, EIF, gid):
         EIF.fsizes += Path(fpath).stat().st_size
         EIF.fjump += 1
 
+
+async def createFolder(bot, root_dir, gid):
+    root = await bot.get_group_root_files(group_id=gid)
+    folders = root.get("folders")
+    fdnames = []
+    fdnames.extend([i["folder_name"] for i in folders])
+
+    for parent, dirs, files in os.walk(root_dir):
+        if dirs:
+            for fd_name in dirs:
+                if fd_name not in fdnames:
+                    print(fd_name)
+                    await bot.create_group_file_folder(
+                        group_id=gid, name=fd_name, parent_i="/")
+
+
+async def upload_files(bot, gid, folder_id, root_dir):
+    group_root = await bot.get_group_files_by_folder(group_id=gid, folder_id=folder_id)
+    files = group_root.get("files")
+    filenames = []
+    if files:
+        filenames = [ff["file_name"] for ff in files]
+    if os.path.exists(root_dir):
+        for entry in os.scandir(root_dir):
+            if entry.is_file() and entry.name not in filenames:
+                absolute_path = Path(root_dir).resolve().joinpath(entry.name)
+
+                await bot.upload_group_file(
+                    group_id=gid, file=str(absolute_path), name=entry.name, folder=folder_id)
+
 EI = EventInfo()
+
+
+@essence.handle()
+async def essen(bot: Bot, event: GroupMessageEvent, state: T_State):
+    gid = event.group_id
+
+    args = vars(state.get("_args"))
+    logger.debug(args)
+
+    messages = []
+    essen_list = await bot.get_essence_msg_list(group_id=gid)
+    for es in essen_list:
+        print("------------")
+        print(es["sender_nick"])
+        print(es["message_id"])
+        print(es["sender_time"])
+        message_id = es["message_id"]
+        # try:
+        msg = await bot.get_msg(message_id=message_id)
+        print(msg["message"])
+        node = {
+            "type": "node",
+            "data": {
+                "name": "精华收集者",
+                "uin": "10086",
+                "content": msg["message"]
+            }}
+        messages.append(node)
+        # except Exception as e:
+        #     print(e)
+    await bot.send_group_forward_msg(group_id=491207941, messages=messages)
+
+    await essence.finish("备份完成")
+
+
+@recovery.handle()
+async def recover(bot: Bot, event: GroupMessageEvent, state: T_State):
+    EI.init()
+    gid = event.group_id
+    if str(gid) in backup_group or backup_group == []:
+        args = vars(state.get("_args"))
+        logger.debug(args)
+
+        await bot.send(event, "恢复中,请稍后(需要管理员权限)")
+        # tstart = time.time()
+        root_dir = "./qqgroup/" + str(gid)
+
+        # 创建群文件夹
+        await createFolder(bot, root_dir, gid)
+
+        # 上传文件
+
+        root = await bot.get_group_root_files(group_id=gid)
+        folders = root.get("folders")
+        # fdpath = "./qqgroup/" + str(event.group_id)
+
+        await upload_files(bot, gid, "/", root_dir)
+
+        # 广度优先搜索
+        dq = deque()
+
+        if folders:
+            dq.extend([i["folder_id"] for i in folders])
+            EI.fdnames.extend([i["folder_name"] for i in folders])
+
+        while dq:
+            EI.fdindex += 1
+            _ = dq.popleft()
+            logger.debug("下一个搜索的文件夹：" + _)
+            root = await bot.get_group_files_by_folder(group_id=gid, folder_id=_)
+
+            await upload_files(bot, gid, _, root_dir + "/" + EI.fdnames[EI.fdindex])
+
+        await recovery.finish("恢复完成")
+
 
 @linker.handle()
 async def link(bot: Bot, event: GroupMessageEvent, state: T_State):
@@ -116,7 +232,7 @@ async def link(bot: Bot, event: GroupMessageEvent, state: T_State):
             root = await bot.get_group_files_by_folder(group_id=gid, folder_id=_)
 
             fdpath = "./qqgroup/" + \
-                str(event.group_id) + "/" + EI.fdnames[EI.fdindex]
+                str(gid) + "/" + EI.fdnames[EI.fdindex]
 
             file = root.get("files")
 
