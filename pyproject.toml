@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "nonebot-plugin-backup"
-version = "2.0.1"
+version = "2.1.0"
 description = "异步备份与恢复 OneBot V11 QQ 群文件的 NoneBot2 插件"
 readme = "README.md"
 license = { file = "LICENSE" }

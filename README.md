@@ -42,6 +42,7 @@ uv add nonebot-plugin-backup
 | `backup_group` | `set[str]` | `set()` | 允许使用插件的群号；空集合允许所有群 |
 | `backup_command` | `str` | `备份群文件` | 备份命令 |
 | `recovery_command` | `str` | `恢复群文件` | 恢复命令 |
+| `backup_permission` | `1 \| 2 \| 3` | `2` | `1` 仅超级用户；`2` 群主/群管理员/超级用户；`3` 所有群成员 |
 | `backup_maxsize` | `float` | `300` | 单文件上限，单位 MiB |
 | `backup_minsize` | `float` | `0.01` | 单文件下限，单位 MiB |
 | `backup_temp_files` | `bool` | `true` | 是否备份群文件根目录中的临时文件 |
@@ -53,6 +54,7 @@ uv add nonebot-plugin-backup
 
 ```dotenv
 BACKUP_GROUP=["123456789"]
+BACKUP_PERMISSION=2
 BACKUP_MAXSIZE=500
 BACKUP_TEMP_FILE_IGNORE=[".gif", ".png", ".jpg", ".mp4"]
 ```

@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Literal
 
 from nonebot import get_plugin_config
 from pydantic import BaseModel, Field, field_validator
@@ -10,6 +11,7 @@ class Config(BaseModel):
     backup_group: set[str] = Field(default_factory=set)
     backup_command: str = "备份群文件"
     recovery_command: str = "恢复群文件"
+    backup_permission: Literal[1, 2, 3] = 2
     backup_maxsize: float = 300
     backup_minsize: float = 0.01
     backup_temp_files: bool = True

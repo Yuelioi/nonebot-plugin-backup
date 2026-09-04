@@ -5,6 +5,7 @@ from nonebot.adapters.onebot.v11 import Bot, GroupMessageEvent
 from nonebot.plugin import PluginMetadata
 
 from .config import Config, plugin_config
+from .permission import build_permission
 
 require("nonebot_plugin_localstore")
 import nonebot_plugin_localstore as localstore  # noqa: E402
@@ -21,8 +22,19 @@ __plugin_meta__ = PluginMetadata(
     supported_adapters={"~onebot.v11"},
 )
 
-backup_matcher = on_command(plugin_config.backup_command, priority=10, block=True)
-restore_matcher = on_command(plugin_config.recovery_command, priority=10, block=True)
+operation_permission = build_permission(plugin_config.backup_permission)
+backup_matcher = on_command(
+    plugin_config.backup_command,
+    permission=operation_permission,
+    priority=10,
+    block=True,
+)
+restore_matcher = on_command(
+    plugin_config.recovery_command,
+    permission=operation_permission,
+    priority=10,
+    block=True,
+)
 storage = BackupStorage(localstore.get_plugin_data_dir(), plugin_config)
 
 
