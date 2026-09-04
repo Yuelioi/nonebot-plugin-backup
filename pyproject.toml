@@ -1,0 +1,57 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "nonebot-plugin-backup"
+version = "2.0.0"
+description = "异步备份与恢复 OneBot V11 QQ 群文件的 NoneBot2 插件"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [{ name = "Yueli", email = "yuelioi1210@gmail.com" }]
+requires-python = ">=3.10"
+dependencies = [
+    "aiofiles>=24.1.0",
+    "aiohttp>=3.10.0",
+    "nonebot-adapter-onebot>=2.4.0",
+    "nonebot-plugin-localstore>=0.7.4",
+    "nonebot2>=2.4.0",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Framework :: AsyncIO",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+
+[project.urls]
+Homepage = "https://github.com/Yuelioi/nonebot-plugin-backup"
+Repository = "https://github.com/Yuelioi/nonebot-plugin-backup"
+Issues = "https://github.com/Yuelioi/nonebot-plugin-backup/issues"
+
+[dependency-groups]
+dev = ["pytest>=8.3.0", "pytest-asyncio>=0.24.0", "ruff>=0.16.0"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["nonebot_plugin_backup"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "ASYNC", "RUF"]
+ignore = [
+    "ASYNC240", # Small pathlib metadata operations; file payload I/O remains async.
+    "RUF001",   # Chinese user-facing punctuation is intentional.
+]

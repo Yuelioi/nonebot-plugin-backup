@@ -1,85 +1,82 @@
 <div align="center">
 
-# nonebot backup group files
+# NoneBot Plugin Backup
 
-✨ 一个基于 [NoneBot2](https://github.com/nonebot/nonebot2) 的插件，用于备份 QQ 群文件 ✨
+异步备份与恢复 OneBot V11 QQ 群文件。
 
 </div>
 
-<p align="center">
-  
-  <a href="https://github.com/ninthseason/nonebot-plugin-directlinker/blob/main/LICENSE">
-    <img src="https://img.shields.io/badge/license-GPL3.0-informational">
-  </a>
-  
-  <a href="https://github.com/nonebot/nonebot2">
-    <img src="https://img.shields.io/badge/nonebot-v2-green">
-  </a>
-  
-  <a href="https://github.com/Mrs4s/go-cqhttp">
-    <img src="https://img.shields.io/badge/go--cqhttp-v1.0.0-red">
-  </a>
-  
-  <a href="">
-    <img src="https://img.shields.io/badge/release-v1.0-orange">
-  </a>
-  
-</p>
+## 功能
 
-## 术语介绍
+- 备份群文件根目录以及群文件夹内的文件；
+- 按文件大小过滤，并可忽略根目录中的指定后缀；
+- 已存在且大小相同的文件不会重复下载；
+- 将本地备份恢复至原群或迁移至新群；
+- 使用 `aiohttp` 流式下载，不阻塞事件循环，也不会把大文件一次性读入内存；
+- 每个群的任务串行执行，避免并发命令破坏同一份备份。
 
-`临时文件`: 不在文件夹内的文件(因为随手传个视频 大图也会进群文件,并且不在文件夹里的)
+本插件仅支持 `nonebot-adapter-onebot` 的 OneBot V11。实际可用性取决于协议实现端是否实现群文件相关动作；恢复文件及创建文件夹通常要求机器人具有群管理员权限。
 
-## 用途
+## 安装
 
-备份群文件
+使用 NB-CLI（商店推荐方式）：
 
-会检索是否已备份, 所以请放心使用
-
-会备份到 robot 安装目录/qqgroup/qq 群号
-
-## 用法
-
-配置文件`.env.*`中添加：
-
-```python
-backup_group=["<QQ群号>"]  # 启用插件的群, 默认为[],代表所有群
-backup_command="备份群文件" # 设置插件触发命令
-backup_maxsize=300        # 超过多少M的文件不备份, 会在后面提醒哪些没备份
-backup_minsize=0.01       # 低于多少M的文件不备份, 默认10kb
-
-backup_temp_files = True  # 是否备份`临时文件`,默认备份
-backup_temp_file_ignore = [".gif", ".png", ".jpg", ".mp4"] # 忽略`临时文件`哪些文件后缀
-
-recovery_command = "恢复群文件"
+```shell
+nb plugin install nonebot-plugin-backup
 ```
 
-### 使用方法
+使用 uv：
 
-直接打 `备份群文件` 或者自定义的触发命令即可
+```shell
+uv add nonebot-plugin-backup
+```
 
-## 恢复群文件
+然后按 NoneBot 的插件加载方式加载 `nonebot_plugin_backup`。
 
-请把备份的旧群文件夹名改为新群id, qqgroup/112334567 -> qqgroup/77655432
+## 配置
 
-如何使用: 对应群输入`恢复群文件`即可
+所有配置均为可选项，插件可以零配置加载。可在 NoneBot 的 `.env` 或 `.env.*` 中设置：
 
-前提1: 机器人需要有管理员权限(否则无法创建文件夹)
+| 配置项 | 类型 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| `backup_group` | `set[str]` | `set()` | 允许使用插件的群号；空集合允许所有群 |
+| `backup_command` | `str` | `备份群文件` | 备份命令 |
+| `recovery_command` | `str` | `恢复群文件` | 恢复命令 |
+| `backup_maxsize` | `float` | `300` | 单文件上限，单位 MiB |
+| `backup_minsize` | `float` | `0.01` | 单文件下限，单位 MiB |
+| `backup_temp_files` | `bool` | `true` | 是否备份群文件根目录中的临时文件 |
+| `backup_temp_file_ignore` | `set[str]` | `{.gif,.png,.jpg,.mp4}` | 根目录忽略的文件后缀，不区分大小写 |
+| `backup_request_timeout` | `float` | `60` | 单次下载总超时，单位秒 |
+| `backup_chunk_size` | `int` | `65536` | 流式下载块大小，单位字节 |
 
-前提2: 小bug?新群需要手动创建一下文件夹(任意一个),然后删除,不然第一次机器人好像无法创建文件夹
+示例：
 
-前提3: 小bug?上传空文件(0b)会失败 不过正经人也不会上传空文件, 就没写判断
+```dotenv
+BACKUP_GROUP=["123456789"]
+BACKUP_MAXSIZE=500
+BACKUP_TEMP_FILE_IGNORE=[".gif", ".png", ".jpg", ".mp4"]
+```
 
-## TODO
+## 使用
 
-备份群精华: 不知道为啥12月7日之前的消息获取不到
+在允许的群中发送 `备份群文件` 即可备份。发送 `恢复群文件` 会将该群对应的数据上传回群文件。
 
-## 缺点
+数据目录由 `nonebot-plugin-localstore` 管理，不再依赖机器人进程的当前工作目录。迁移到新群时，先找到 localstore 分配给本插件的数据目录，再将旧群号目录复制并改名为新群号。
 
-不会同步删除群文件
+下载采用临时 `.part` 文件并在成功后原子替换目标文件。下载失败不会留下看似完整的文件；恢复时同名远端文件会被跳过，不会覆盖。
 
-## 参考来源
+## 开发
 
-[DirectLinker](https://github.com/ninthseason/nonebot-plugin-directlinker)
+```shell
+uv sync --all-groups
+uv run ruff format .
+uv run ruff check .
+uv run pytest
+uv build
+```
 
-因为我想备份群文件, 防止炸群, 然后发现只有这一个类似的~ 无奈只能魔改下
+当前发布规范核查见 [`docs/nonebot-plugin-publishing-research.md`](docs/nonebot-plugin-publishing-research.md)。
+
+## 许可证
+
+[GPL-3.0](LICENSE)
